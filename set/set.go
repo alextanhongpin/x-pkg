@@ -9,6 +9,7 @@ type (
 		Has(key interface{}) bool
 		Add(key interface{})
 		Remove(key interface{})
+		Size() int
 	}
 	SetImpl struct {
 		value map[interface{}]struct{}
@@ -30,6 +31,10 @@ func (s *SetImpl) Has(key interface{}) bool {
 
 func (s *SetImpl) Remove(key interface{}) {
 	delete(s.value, key)
+}
+
+func (s *SetImpl) Size() int {
+	return len(s.value)
 }
 
 type ConcurrentSet struct {
@@ -59,4 +64,11 @@ func (c *ConcurrentSet) Remove(key interface{}) {
 	c.Lock()
 	delete(c.value, key)
 	c.Unlock()
+}
+
+func (c *ConcurrentSet) Size() int {
+	c.RLock()
+	size := len(c.value)
+	c.RUnlock()
+	return size
 }
