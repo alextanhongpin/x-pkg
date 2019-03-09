@@ -16,8 +16,12 @@ type (
 	}
 )
 
-func New() *SetImpl {
-	return &SetImpl{make(map[interface{}]struct{})}
+func New(values ...interface{}) *SetImpl {
+	s := SetImpl{make(map[interface{}]struct{})}
+	for _, v := range values {
+		s.Add(v)
+	}
+	return &s
 }
 
 func (s *SetImpl) Add(key interface{}) {
@@ -42,9 +46,12 @@ type ConcurrentSet struct {
 	value map[interface{}]struct{}
 }
 
-func NewConcurrent() *ConcurrentSet {
-	value := make(map[interface{}]struct{})
-	return &ConcurrentSet{value: value}
+func NewConcurrent(values ...interface{}) *ConcurrentSet {
+	c := ConcurrentSet{value: make(map[interface{}]struct{})}
+	for _, v := range values {
+		c.Add(v)
+	}
+	return &c
 }
 
 func (c *ConcurrentSet) Add(key interface{}) {
