@@ -5,34 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 	"time"
 )
-
-type Shutdown func(context.Context)
-
-type Shutdowns []Shutdown
-
-func (shutdowns Shutdowns) Close(ctx context.Context) {
-	var wg sync.WaitGroup
-	wg.Add(len(shutdowns))
-	for _, shutdown := range shutdowns {
-		go func(shutdown Shutdown) {
-			defer wg.Done()
-			shutdown(ctx)
-		}(shutdown)
-	}
-	wg.Wait()
-}
-
-func Signal() <-chan os.Signal {
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	return quit
-}
 
 // New returns a new shutdown function given a http.Handler function.
 func New(handler http.Handler, port string) Shutdown {
