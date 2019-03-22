@@ -13,20 +13,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type Header struct {
-	name, value string
-}
+type (
+	Header struct {
+		name, value string
+	}
 
-type Option struct {
-	Bearer       string
-	ExpiresAfter time.Duration
-}
+	Option struct {
+		Bearer       string
+		ExpiresAfter time.Duration
+	}
+
+	Repository interface {
+		LookupSecretKey(accessKeyID string) (string, error)
+	}
+
+	Signer interface {
+		ConvertMapToHeaders(fields map[string]interface{}) http.Header
+		SignHeaders(secretKey string, header http.Header) string
+		ValidateHeaderDate(header http.Header) error
+		ValidateHeader(header http.Header) error
+		NewAuthorizationHeader(accessKeyID, signature string) string
+		SelectHeadersWithPrefix(header http.Header) http.Header
+	}
+
+	SignerImpl struct {
+		opt          Option
+		headerPrefix string
+		headerDate   string
+		repo         Repository
+	}
+)
 
 func NewSigner(opt Option, repo Repository) *SignerImpl {
 	opt.Bearer = strings.Title(opt.Bearer)
@@ -36,25 +59,6 @@ func NewSigner(opt Option, repo Repository) *SignerImpl {
 		headerDate:   newHeaderDate(opt.Bearer),
 		repo:         repo,
 	}
-}
-
-type Repository interface {
-	LookupSecretKey(accessKeyID string) (string, error)
-}
-
-type SignerImpl struct {
-	opt          Option
-	headerPrefix string
-	headerDate   string
-	repo         Repository
-}
-
-func newHeaderPrefix(bearer string) string {
-	return fmt.Sprintf("X-%s-", bearer)
-}
-
-func newHeaderDate(bearer string) string {
-	return fmt.Sprintf("X-%s-Date", bearer)
 }
 
 func (s *SignerImpl) ConvertMapToHeaders(fields map[string]interface{}) http.Header {
@@ -151,16 +155,17 @@ func (r *repository) LookupSecretKey(accessKeyID string) (string, error) {
 }
 
 func main() {
-
 	var (
-		secretKey   = "secret"
-		accessKeyID = "xyz"
+		secretKey    = "secret"
+		accessKeyID  = "xyz"
+		bearer       = "custom"
+		expiresAfter = 5 * time.Second
 	)
 
 	repo := &repository{}
 	opt := Option{
-		Bearer:       "aws",
-		ExpiresAfter: 5 * time.Second,
+		Bearer:       bearer,
+		ExpiresAfter: expiresAfter,
 	}
 	signer := NewSigner(opt, repo)
 
@@ -184,11 +189,23 @@ func main() {
 	req.Header.Add("X-Request-ID", "xyz")
 	fmt.Println(req.Header)
 
+	// http.Header and url.Values can be conversible.
+	cvt := url.Values(req.Header)
+	fmt.Println(http.Header(cvt))
+
 	err := signer.ValidateHeader(req.Header)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("valid signature")
+	fmt.Println("signature is valid")
+}
+
+func newHeaderPrefix(bearer string) string {
+	return fmt.Sprintf("X-%s-", bearer)
+}
+
+func newHeaderDate(bearer string) string {
+	return fmt.Sprintf("X-%s-Date", bearer)
 }
 
 func concatHeaders(headers ...Header) string {
