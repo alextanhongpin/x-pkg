@@ -1,48 +1,30 @@
 package observable
 
-import (
-	"fmt"
-	"sync"
-)
-
-type ObserverFunc func(interface{}) error
+// Observer represents the observer interface.
 type Observer interface {
-	On(event string, fn ObserverFunc)
-	Emit(event string, params interface{}) error
+	On(event Event, fn Action)
+	Emit(event Event, params interface{}) error
+	Start()
+	Stop()
 }
 
-type SyncObservable struct {
-	sync.RWMutex
-	events map[string][]ObserverFunc
+// Event represents the type of Event that is registered.
+type Event string
+
+func (e Event) String() string {
+	return string(e)
 }
 
-func (o *SyncObservable) On(event string, fn ObserverFunc) {
-	o.Lock()
-	_, exist := o.events[event]
-	if !exist {
-		o.events[event] = make([]ObserverFunc, 0)
-	}
-	o.events[event] = append(o.events[event], fn)
-	o.Unlock()
+// NewEvent returns a new Event.
+func NewEvent(s string) Event {
+	return Event(s)
 }
 
-func (o *SyncObservable) Emit(event string, params interface{}) error {
-	o.RLock()
-	fns, exist := o.events[event]
-	o.RUnlock()
-	if !exist {
-		return fmt.Errorf(`event "%s" does not exist`, event)
-	}
-	for _, fn := range fns {
-		err := fn(params)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// Action represents the function that is executed for the given Event.
+type Action func(interface{}) error
 
-func NewSyncObservable() *SyncObservable {
-	events := make(map[string][]ObserverFunc)
-	return &SyncObservable{events: events}
+// Message represents the payload that is sent through the channel.
+type Message struct {
+	event  Event
+	params interface{}
 }
