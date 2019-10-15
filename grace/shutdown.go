@@ -9,6 +9,10 @@ type Shutdown func(context.Context)
 
 type Shutdowns []Shutdown
 
+func NewShutdowns() Shutdowns {
+	return make([]Shutdown, 0)
+}
+
 func (shutdowns *Shutdowns) Append(shutdown Shutdown) {
 	*shutdowns = append(*shutdowns, shutdown)
 }
