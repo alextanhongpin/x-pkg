@@ -6,38 +6,6 @@ import (
 	"strings"
 )
 
-/*
-const (
-	Bearer = "bearer"
-	Basic  = "basic"
-)
-
-func main() {
-	req, err := http.NewRequest("GET", "http://google.com", nil)
-	req.Header.Add("Authorization", "Bearer token...")
-
-	hdr := New()
-	err = hdr.Extract(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(hdr)
-
-	switch {
-	case hdr.BearerIs(Bearer):
-		log.Println("is bearer")
-		// verifyBearer(hdr.Token())
-	case hdr.BearerIs(Basic):
-		log.Println("is basic")
-		// verifyBasic(hdr.Token())
-	case hdr.BearerIs("custom"):
-		// verifyCustom(hdr.Token())
-	default:
-
-	}
-}
-*/
-
 // AuthHeader represents the entity for the authorization header.
 type AuthHeader struct {
 	bearer string
@@ -52,7 +20,7 @@ func New() *AuthHeader {
 // Extract attempts to obtain the authorization bearer and token from the `Authorization` header.
 func (a *AuthHeader) Extract(r *http.Request) error {
 	auth := r.Header.Get("Authorization")
-	paths := strings.Split(auth, " ")
+	paths := strings.Fields(auth)
 	if len(paths) != 2 {
 		return errors.New("invalid authorization header")
 	}
