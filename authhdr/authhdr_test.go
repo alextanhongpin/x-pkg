@@ -8,11 +8,6 @@ import (
 	"github.com/alextanhongpin/pkg/authhdr"
 )
 
-const (
-	Bearer = "bearer"
-	Basic  = "basic"
-)
-
 func Example() {
 	req, err := http.NewRequest("GET", "http://google.com", nil)
 	req.Header.Add("Authorization", "Bearer token...")
@@ -25,10 +20,10 @@ func Example() {
 	log.Println(hdr)
 
 	switch {
-	case hdr.BearerIs(Bearer):
+	case hdr.BearerIs(authhdr.Bearer):
 		log.Println("is bearer")
 		// verifyBearer(hdr.Token())
-	case hdr.BearerIs(Basic):
+	case hdr.BearerIs(authhdr.Basic):
 		log.Println("is basic")
 		// verifyBasic(hdr.Token())
 	case hdr.BearerIs("custom"):
@@ -56,5 +51,8 @@ func TestAuthHeader(t *testing.T) {
 	}
 	if bearer != hdr.Bearer() {
 		t.Fatalf("expected %s, got %s", bearer, hdr.Bearer())
+	}
+	if got := hdr.BearerIs(authhdr.Bearer); !got {
+		t.Fatalf("expected true, got %t", got)
 	}
 }

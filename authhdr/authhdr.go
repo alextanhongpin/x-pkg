@@ -1,9 +1,16 @@
+// Package authhdr reduces the boilerplate code required to extract authentication
+// token from the Authorization header.
 package authhdr
 
 import (
 	"errors"
 	"net/http"
 	"strings"
+)
+
+const (
+	Bearer = "bearer"
+	Basic  = "basic"
 )
 
 // AuthHeader represents the entity for the authorization header.
