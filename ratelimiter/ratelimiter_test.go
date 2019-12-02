@@ -1,7 +1,13 @@
-# RateLimiter
+package ratelimiter_test
 
-```go
-func main() {
+import (
+	"fmt"
+	"time"
+
+	"github.com/alextanhongpin/pkg/ratelimiter"
+)
+
+func Example() {
 	var (
 		frequency   = Per(time.Second, 5)
 		burst       = 5
@@ -24,4 +30,3 @@ func main() {
 	ok = rl.Allow("user_1")
 	fmt.Println("allowed?", ok)
 }
-```

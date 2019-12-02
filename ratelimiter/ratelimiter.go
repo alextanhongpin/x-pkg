@@ -2,120 +2,106 @@
 package ratelimiter
 
 import (
-	"context"
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
-func Example() {
-	lim := New(ratelimiter.Per(1*time.Second, 3))
-	shutdown := lim.CleanupVisitor(5*time.Second, 3*time.Second)
+type client struct {
+	updatedAt time.Time
+	limiter   *rate.Limiter
 }
 
-func Per(duration time.Duration, n int) rate.Limit {
-	period := duration / time.Duration(n)
-	return rate.Every(period)
-}
-
-type Visitor struct {
-	lastSeen time.Time
-	limiter  *rate.Limiter
-}
-
-type Limiter interface {
-	AddVisitor(clientIP string) *rate.Limiter
-	CleanupVisitor(interval, expiresIn time.Duration) func(context.Context)
-	DeleteVisitor(expiresIn time.Duration)
-	GetVisitor(clientIP string) *rate.Limiter
-}
-
-type LimiterImpl struct {
+type RateLimiter struct {
 	sync.RWMutex
-	visitors map[string]*Visitor
-	sync.Once
+	clients map[string]client
+
 	factory func() *rate.Limiter
-	quit    (chan struct{})
+	sync.Once
+	quit chan interface{}
+	wg   sync.WaitGroup
 }
 
-func New(limit rate.Limit, burst int) *LimiterImpl {
-	return &LimiterImpl{
-		quit:     make(chan struct{}),
-		visitors: make(map[string]*Visitor),
+func Per(interval time.Duration, times int) rate.Limit {
+	frequency := interval / time.Duration(times)
+	return rate.Every(frequency)
+}
+
+func New(frequency rate.Limit, burst int, inactiveTTL time.Duration) (*RateLimiter, func()) {
+	rateLimiter := &RateLimiter{
+		quit:    make(chan interface{}),
+		clients: make(map[string]client),
 		factory: func() *rate.Limiter {
-			return rate.NewLimiter(limit, burst)
+			return rate.NewLimiter(frequency, burst)
 		},
 	}
+	go rateLimiter.clean(inactiveTTL)
+	return rateLimiter, rateLimiter.cancel
 }
 
-func (r *LimiterImpl) AddVisitor(clientIP string) *rate.Limiter {
-	limiter := r.factory()
-	r.Lock()
-	r.visitors[clientIP] = &Visitor{limiter: limiter, lastSeen: time.Now()}
-	r.Unlock()
-	return limiter
-}
+func (r *RateLimiter) clean(inactiveTTL time.Duration) {
+	ticker := time.NewTicker(inactiveTTL * 2)
+	defer ticker.Stop()
 
-func (r *LimiterImpl) GetVisitor(clientIP string) *rate.Limiter {
-	r.RLock()
-	visitor, exist := r.visitors[clientIP]
-	r.RUnlock()
-	if !exist {
-		return r.AddVisitor(clientIP)
-	}
-	r.UpdateVisitor(clientIP)
-	return visitor.limiter
-}
+	r.wg.Add(1)
+	defer r.wg.Done()
 
-func (r *LimiterImpl) UpdateVisitor(clientIP string) {
-	r.Lock()
-	visitor, exist := r.visitors[clientIP]
-	if exist {
-		visitor.lastSeen = time.Now()
-	}
-	r.Unlock()
-}
-
-func (r *LimiterImpl) DeleteVisitor(expiresIn time.Duration) {
-	r.Lock()
-	for ip, v := range r.visitors {
-		if time.Since(v.lastSeen) > expiresIn {
-			delete(r.visitors, ip)
-		}
-	}
-	r.Unlock()
-}
-
-func (r *LimiterImpl) CleanupVisitor(interval, expiresIn time.Duration) func(context.Context) {
-	log := zap.L()
-	closed := make(chan interface{})
-	go func() {
-		t := time.NewTicker(interval)
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				r.DeleteVisitor(expiresIn)
-			case <-r.quit:
-				log.Info("ratelimiter closed")
-				close(closed)
-				return
-			}
-		}
-	}()
-	return func(ctx context.Context) {
-		r.Once.Do(func() {
-			close(r.quit)
-		})
+	for {
 		select {
-		case <-closed:
-			log.Info("ratelimiter gracefully closed")
+		case <-r.quit:
 			return
-		case <-ctx.Done():
-			log.Info("ratelimiter forced closed")
-			return
+		case <-ticker.C:
+			r.Lock()
+			for id, client := range r.clients {
+				if time.Since(client.updatedAt) > inactiveTTL {
+					delete(r.clients, id)
+				}
+			}
+			r.Unlock()
 		}
 	}
+}
+
+func (r *RateLimiter) Allow(key string) bool {
+	client := r.get(key)
+	return client.limiter.Allow()
+}
+
+func (r *RateLimiter) get(key string) client {
+	r.RLock()
+	client, ok := r.clients[key]
+	r.RUnlock()
+
+	if !ok {
+		return r.add(key)
+	}
+	r.update(key)
+	return client
+}
+
+func (r *RateLimiter) add(key string) client {
+	c := client{
+		limiter:   r.factory(),
+		updatedAt: time.Now(),
+	}
+	r.Lock()
+	r.clients[key] = c
+	r.Unlock()
+	return c
+}
+
+func (r *RateLimiter) update(key string) {
+	r.Lock()
+	if client, ok := r.clients[key]; ok {
+		client.updatedAt = time.Now()
+	}
+	r.Unlock()
+}
+
+func (r *RateLimiter) cancel() {
+	r.Once.Do(func() {
+		close(r.quit)
+		r.wg.Wait()
+	})
 }
