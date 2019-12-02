@@ -1,72 +1,93 @@
+// Package enum allows creation of enum and comparing between enums.
 package enum
 
 import (
+	"fmt"
 	"strings"
 )
 
 type (
-	Enum interface {
+	// Comparable represents the enum operations.
+	Comparable interface {
 		Has(interface{}) bool
 		Add(interface{})
 	}
 
-	EnumImpl struct {
+	// Enum represents an enum type.
+	Enum struct {
 		value map[interface{}]struct{}
 	}
 )
 
-func New(val interface{}, values ...interface{}) *EnumImpl {
+// New returns a new Enum.
+func New(val interface{}, values ...interface{}) *Enum {
 	value := make(map[interface{}]struct{})
 	value[val] = struct{}{}
 	for _, val := range values {
 		value[val] = struct{}{}
 	}
 
-	return &EnumImpl{value}
+	return &Enum{value}
 }
 
-func (e *EnumImpl) Has(enum interface{}) bool {
+// Has checks if the enum exists.
+func (e *Enum) Has(enum interface{}) bool {
 	_, exist := e.value[enum]
 	return exist
 }
 
-func (e *EnumImpl) Add(enum interface{}) {
-	e.value[enum] = struct{}{}
+// Add adds the enum to the existing enums.
+func (e *Enum) Add(enums ...interface{}) {
+	for _, enum := range enums {
+		e.value[enum] = struct{}{}
+	}
 }
 
 type (
-	StringEnum interface {
+	// StringsComparable represents an string enums.
+	StringsComparable interface {
 		Has(string) bool
 		HasStrict(string) bool
 		Add(string)
 	}
 
-	StringEnumImpl struct {
-		value []string
+	// StringEnum holds a list of string enums.
+	StringEnum struct {
+		value map[string]struct{}
 	}
 )
 
-func NewString(val string, values ...string) *StringEnumImpl {
-	value := make([]string, len(values)+1)
-	value[0] = val
-	for i, val := range values {
-		value[i+1] = val
+// NewString adds a string enum to the existing collections.
+func NewString(val string, values ...string) *StringEnum {
+
+	value := make(map[string]struct{})
+	value[val] = struct{}{}
+	for _, val := range values {
+		value[val] = struct{}{}
 	}
-	return &StringEnumImpl{value}
+	return &StringEnum{value}
 }
 
-func (s *StringEnumImpl) Has(enum string) bool {
-	for _, val := range s.value {
+// Add adds the enum to the existing enums.
+func (s *StringEnum) Add(enums ...string) {
+	for _, enum := range enums {
+		s.value[enum] = struct{}{}
+	}
+}
+
+// Has checks if a string exists in the current enums, ignoring cases.
+func (s *StringEnum) Has(enum string) bool {
+	for val := range s.value {
 		if eq := strings.EqualFold(val, enum); eq {
 			return eq
 		}
-
 	}
 	return false
 }
 
-func (s *StringEnumImpl) HasStrict(enum string) bool {
-	for _, val := range s.value {
+// HasStrict checks if a string with matching cases exists.
+func (s *StringEnum) HasStrict(enum string) bool {
+	for val := range s.value {
 		if eq := val == enum; eq {
 			return eq
 		}
@@ -74,9 +95,7 @@ func (s *StringEnumImpl) HasStrict(enum string) bool {
 	return false
 }
 
-/*
-
-func main() {
+func Example() {
 	const (
 		North = "north"
 		West  = "west"
@@ -124,5 +143,3 @@ func main() {
 		fmt.Println(roles.Has("uSeR"))
 	}
 }
-
-*/

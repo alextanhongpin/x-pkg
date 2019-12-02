@@ -1,11 +1,22 @@
 package role_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/alextanhongpin/pkg/role"
 	"github.com/alextanhongpin/pkg/set"
 )
+
+func Example() {
+	var roles = role.Roles{
+		"admin": set.New("read:books", "delete:books", "create:books"),
+		"user":  set.New("read:books"),
+	}
+
+	fmt.Println("read:books", roles.Can("read:books"))
+	fmt.Println("create:books", roles.Can("create:books"))
+}
 
 func BenchmarkRoleSet(b *testing.B) {
 	var roles = Roles{

@@ -1,3 +1,5 @@
+// Package circuitbreaker implements an in-memory circuit breaker to add
+// resiliency to single instance.
 package circuitbreaker
 
 import (
@@ -7,6 +9,43 @@ import (
 	"sync/atomic"
 	"time"
 )
+
+func Example() {
+
+	state := NewDefaultState()
+	state.Timeout = 1 * time.Second
+	cb := New(state)
+	for i := 0; i < 10; i++ {
+		res, err := cb.Handle(func() (interface{}, error) {
+			return nil, errors.New("some error")
+		})
+		fmt.Println(res, err)
+	}
+	fmt.Println("sleep 1,1 seconds")
+	time.Sleep(1100 * time.Millisecond)
+
+	for i := 0; i < 3; i++ {
+		res, err := cb.Handle(func() (interface{}, error) {
+			return nil, errors.New("another error")
+		})
+		fmt.Println(res, err)
+	}
+
+	fmt.Println("sleep 1.1 seconds")
+	time.Sleep(1100 * time.Millisecond)
+	for i := 0; i < 15; i++ {
+		res, err := cb.Handle(func() (interface{}, error) {
+			return true, nil
+		})
+		fmt.Println(res, err)
+	}
+	for i := 0; i < 20; i++ {
+		res, err := cb.Handle(func() (interface{}, error) {
+			return nil, errors.New("some error")
+		})
+		fmt.Println(res, err)
+	}
+}
 
 // ErrTooManyRequests is returned when the CircuitBreaker is in open state.
 var ErrTooManyRequests = errors.New("too many requests")

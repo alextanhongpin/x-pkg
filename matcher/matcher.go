@@ -1,16 +1,17 @@
+// Package matcher allows strings to be compared easily.
 package matcher
 
 import (
+	"fmt"
 	"strings"
 )
 
-/*
 const (
 	Bearer = "bearer"
 	Basic  = "basic"
 )
 
-func main() {
+func Example() {
 	header := Match("Bearer")
 	switch {
 	case header.Is("Bearer"):
@@ -21,8 +22,8 @@ func main() {
 		fmt.Println("none")
 	}
 }
-*/
 
+// Match allows strings to be compared.
 type Match string
 
 // Is checks if the strings are similar. Capitalization does not matter.

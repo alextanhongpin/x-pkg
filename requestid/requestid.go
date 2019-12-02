@@ -1,3 +1,5 @@
+// Package requestid allows easy extraction of request id from the HTTP header
+// and provides methods to set and get values from context.
 package requestid
 
 import (

@@ -1,3 +1,4 @@
+// Package ratelimiter implements an in-memory rate limiter.
 package ratelimiter
 
 import (
@@ -8,6 +9,11 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
+
+func Example() {
+	lim := New(ratelimiter.Per(1*time.Second, 3))
+	shutdown := lim.CleanupVisitor(5*time.Second, 3*time.Second)
+}
 
 func Per(duration time.Duration, n int) rate.Limit {
 	period := duration / time.Duration(n)
