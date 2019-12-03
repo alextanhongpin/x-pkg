@@ -7,7 +7,7 @@ import (
 	"github.com/alextanhongpin/pkg/ratelimiter"
 )
 
-func Example() {
+func Example_in_memory() {
 	var (
 		frequency   = Per(time.Second, 5)
 		burst       = 5

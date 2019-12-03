@@ -2,7 +2,6 @@
 package matcher
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -10,18 +9,6 @@ const (
 	Bearer = "bearer"
 	Basic  = "basic"
 )
-
-func Example() {
-	header := Match("Bearer")
-	switch {
-	case header.Is("Bearer"):
-		fmt.Println("is bearer")
-	case header.Is("Basic"):
-		fmt.Println("is basic")
-	default:
-		fmt.Println("none")
-	}
-}
 
 // Match allows strings to be compared.
 type Match string

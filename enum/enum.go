@@ -2,7 +2,6 @@
 package enum
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -93,53 +92,4 @@ func (s *StringEnum) HasStrict(enum string) bool {
 		}
 	}
 	return false
-}
-
-func Example() {
-	const (
-		North = "north"
-		West  = "west"
-		South = "south"
-		East  = "east"
-	)
-
-	{
-		directions := New(North, West, South, East)
-		fmt.Println(
-			directions.Has(North),
-			directions.Has("north"),
-			directions.Has("North"),
-		)
-	}
-	{
-		directions := New(0, 1, 2, 3)
-		fmt.Println(
-			directions.Has(1),
-			directions.Has("2"),
-			directions.Has(2),
-		)
-	}
-
-	{
-		const (
-			User           = "user"
-			Admin          = "admin"
-			RestrictedUser = "restricted_user"
-		)
-		roles := New(User, Admin)
-		fmt.Println(roles.Has("Admin"))
-		fmt.Println(roles.Has(RestrictedUser))
-		roles.Add(RestrictedUser)
-		fmt.Println(roles.Has(RestrictedUser))
-	}
-
-	{
-		const (
-			User  = "user"
-			Admin = "admin"
-		)
-		roles := NewString(User, Admin)
-		fmt.Println(roles.Has("Admin"))
-		fmt.Println(roles.Has("uSeR"))
-	}
 }
