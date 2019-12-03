@@ -78,7 +78,7 @@ func (t *TTLMap) clear(duration time.Duration) {
 			return
 		case <-ticker.C:
 			t.Lock()
-			var i int64
+			var i int
 			for key, item := range t.values {
 				if item.ttl > 0 && time.Since(item.updatedAt) > item.ttl {
 					i++

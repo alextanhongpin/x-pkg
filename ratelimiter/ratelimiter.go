@@ -53,9 +53,17 @@ func (r *RateLimiter) clean(inactiveTTL time.Duration) {
 			return
 		case <-ticker.C:
 			r.Lock()
+			var i int
 			for id, client := range r.clients {
 				if time.Since(client.updatedAt) > inactiveTTL {
+					i++
 					delete(r.clients, id)
+				}
+
+				// Clean at most 10,000 keys to prevent holding
+				// the lock for too long.
+				if i > 10_000 {
+					break
 				}
 			}
 			r.Unlock()
