@@ -78,9 +78,16 @@ func (t *TTLMap) clear(duration time.Duration) {
 			return
 		case <-ticker.C:
 			t.Lock()
+			var i int64
 			for key, item := range t.values {
 				if item.ttl > 0 && time.Since(item.updatedAt) > item.ttl {
+					i++
 					delete(t.values, key)
+				}
+				// Clean at most 10,000 keys to prevent holding
+				// the lock for too long.
+				if i > 10_000 {
+					break
 				}
 			}
 			t.Unlock()
