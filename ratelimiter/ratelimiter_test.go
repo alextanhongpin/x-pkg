@@ -9,7 +9,7 @@ import (
 
 func Example_in_memory() {
 	var (
-		frequency   = Per(time.Second, 5)
+		frequency   = ratelimiter.Per(time.Second, 5)
 		burst       = 5
 		inactiveTTL = time.Second
 	)
