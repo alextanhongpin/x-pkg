@@ -3,6 +3,7 @@ module github.com/alextanhongpin/pkg
 go 1.13
 
 require (
+	github.com/coreos/go-semver v0.3.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis v6.15.7+incompatible
 	github.com/golang/protobuf v1.3.2 // indirect
