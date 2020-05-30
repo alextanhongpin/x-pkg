@@ -7,24 +7,24 @@ import (
 
 type Shutdown func(context.Context)
 
-type Shutdowns []Shutdown
+type ShutdownGroup []Shutdown
 
-func NewShutdowns() Shutdowns {
-	return make([]Shutdown, 0)
+func NewShutdownGroup() ShutdownGroup {
+	return make(ShutdownGroup, 0)
 }
 
-func (shutdowns *Shutdowns) Append(shutdown Shutdown) {
-	*shutdowns = append(*shutdowns, shutdown)
+func (sg *ShutdownGroup) Add(shutdown Shutdown) {
+	*sg = append(*sg, shutdown)
 }
 
-func (shutdowns Shutdowns) Close(ctx context.Context) {
+func (sg ShutdownGroup) Close(ctx context.Context) {
 	var wg sync.WaitGroup
-	wg.Add(len(shutdowns))
-	for _, shutdown := range shutdowns {
+	wg.Add(len(sg))
+	for _, s := range sg {
 		go func(shutdown Shutdown) {
 			defer wg.Done()
 			shutdown(ctx)
-		}(shutdown)
+		}(s)
 	}
 	wg.Wait()
 }
