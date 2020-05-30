@@ -19,9 +19,6 @@ func main() {
 	var (
 		audience     = "your company"
 		issuer       = "your service"
-		semver       = "0.0.1"
-		scope        = "guest"
-		role         = "user"
 		secret       = "secret"
 		expiresAfter = 10 * time.Second
 	)
@@ -29,18 +26,13 @@ func main() {
 		Secret:       []byte(secret),
 		ExpiresAfter: expiresAfter,
 		DefaultClaims: &gojwt.Claims{
-			Semver: semver,
-			Scope:  scope,
-			Role:   role,
 			StandardClaims: jwt.StandardClaims{
 				Audience: audience,
 				Issuer:   issuer,
 			},
 		},
 		Validator: func(c *gojwt.Claims) error {
-			if c.Semver != semver ||
-				c.Issuer != issuer ||
-				c.Audience != audience {
+			if c.Issuer != issuer || c.Audience != audience {
 				return errors.New("invalid token")
 			}
 			return nil
