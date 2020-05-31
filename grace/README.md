@@ -81,7 +81,7 @@ func NewDB(sg *grace.ShutdownGroup) *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sg.Add(func(ctx context.Context) error {
+	sg.Add(func(ctx context.Context) {
 		db.Close()
 		return nil
 	})

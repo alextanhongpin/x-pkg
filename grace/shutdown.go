@@ -7,24 +7,32 @@ import (
 
 type Shutdown func(context.Context)
 
-type ShutdownGroup []Shutdown
-
-func NewShutdownGroup() ShutdownGroup {
-	return make(ShutdownGroup, 0)
+type ShutdownGroup struct {
+	s    []Shutdown
+	once sync.Once
 }
 
+// NewShutdownGroup returns a new pointer to ShutdownGroup.
+func NewShutdownGroup() *ShutdownGroup {
+	return &ShutdownGroup{}
+}
+
+// Add a new Shutdown function to the list - each shutdown accepts a context to allow cancellation/timeout.
 func (sg *ShutdownGroup) Add(shutdown Shutdown) {
-	*sg = append(*sg, shutdown)
+	sg.s = append(sg.s, shutdown)
 }
 
-func (sg ShutdownGroup) Close(ctx context.Context) {
-	var wg sync.WaitGroup
-	wg.Add(len(sg))
-	for _, s := range sg {
-		go func(shutdown Shutdown) {
-			defer wg.Done()
-			shutdown(ctx)
-		}(s)
-	}
-	wg.Wait()
+// Close will synchronize the termination of all resources, and will only execute once.
+func (sg *ShutdownGroup) Close(ctx context.Context) {
+	sg.once.Do(func() {
+		var wg sync.WaitGroup
+		wg.Add(len(sg.s))
+		for _, s := range sg.s {
+			go func(shutdown Shutdown) {
+				defer wg.Done()
+				shutdown(ctx)
+			}(s)
+		}
+		wg.Wait()
+	})
 }
