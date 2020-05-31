@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	Claims struct {
+	UserInfo struct {
 		Email         string                 `json:"email,omitempty"`
 		EmailVerified bool                   `json:"email_verified,omitempty"`
 		FamilyName    string                 `json:"family_name,omitempty"`
@@ -18,6 +18,10 @@ type (
 		Name          string                 `json:"name,omitempty"`
 		Picture       string                 `json:"picture,omitempty"`
 		Extra         map[string]interface{} `json:"extra,omitempty"`
+	}
+
+	Claims struct {
+		UserInfo
 		jwt.StandardClaims
 	}
 
