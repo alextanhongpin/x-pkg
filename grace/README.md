@@ -70,3 +70,29 @@ func main() {
 	fmt.Println("process terminated")
 }
 ```
+
+
+Optionally, you can choose to pass it the way `testing.Cleanup` does:
+
+```
+// database/database.go
+func NewDB(sg *grace.ShutdownGroup) *sql.DB {
+	db, err := sql.Open("postgres", "...")
+	if err != nil {
+		log.Fatal(err)
+	}
+	sg.Add(func(ctx context.Context) error {
+		db.Close()
+		return nil
+	})
+	return db
+}
+
+// main.go
+func main() {
+	sg := grace.NewShutdownGroup()
+	db := database.New(sg)
+	...
+	sg.Close(context.Background())
+}
+```
