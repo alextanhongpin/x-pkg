@@ -19,7 +19,7 @@ func NewShutdownGroup() *ShutdownGroup {
 
 // Add a new Shutdown function to the list - each shutdown accepts a context to allow cancellation/timeout.
 func (sg *ShutdownGroup) Add(shutdown Shutdown) {
-	sg.s = append(sg.s, shutdown)
+	sg.s = append([]Shutdown{shutdown}, sg.s...)
 }
 
 // Close will synchronize the termination of all resources, and will only execute once.
