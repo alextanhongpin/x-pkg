@@ -6,7 +6,7 @@ import (
 	"github.com/alextanhongpin/pkg/stringcase"
 )
 
-func Example_CamelCase() {
+func ExampleCamelCase() {
 	for _, s := range []string{
 		"user_service",
 		"party pooper",
@@ -36,7 +36,7 @@ func Example_CamelCase() {
 	//address.home -> addressHome
 }
 
-func Example_SnakeCase() {
+func ExampleSnakeCase() {
 	for _, s := range []string{
 		"user_service",
 		"party pooper",
@@ -66,7 +66,7 @@ func Example_SnakeCase() {
 	//address.home -> address_home
 }
 
-func Example_KebabCase() {
+func ExampleKebabCase() {
 	for _, s := range []string{
 		"user_service",
 		"party pooper",
@@ -96,7 +96,7 @@ func Example_KebabCase() {
 	//address.home -> address-home
 }
 
-func Example_PascalCase() {
+func ExamplePascalCase() {
 	for _, s := range []string{
 		"user_service",
 		"party pooper",
