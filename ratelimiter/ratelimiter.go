@@ -8,6 +8,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type Limiter interface {
+	Allow(string) bool
+}
+
 type client struct {
 	updatedAt time.Time
 	limiter   *rate.Limiter
