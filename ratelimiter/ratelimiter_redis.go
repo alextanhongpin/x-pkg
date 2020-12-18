@@ -1,10 +1,11 @@
 package ratelimiter
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 const script = `
@@ -44,6 +45,6 @@ func (r *Redis) Allow(key string) bool {
 		keys = []string{key}
 		args = []interface{}{time.Now().UnixNano()}
 	)
-	res, err := r.client.Eval(r.script, keys, args...).Result()
+	res, err := r.client.Eval(context.Background(), r.script, keys, args...).Result()
 	return res == "ok" && err == nil
 }

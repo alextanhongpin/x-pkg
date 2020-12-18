@@ -6,7 +6,7 @@ import (
 
 	"github.com/alextanhongpin/pkg/ratelimiter"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 func Example_redis() {
