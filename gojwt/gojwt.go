@@ -10,14 +10,14 @@ import (
 
 type (
 	UserInfo struct {
-		Email         string                 `json:"email,omitempty"`
-		EmailVerified bool                   `json:"email_verified,omitempty"`
-		FamilyName    string                 `json:"family_name,omitempty"`
-		GivenName     string                 `json:"given_name,omitempty"`
-		Locale        string                 `json:"locale,omitempty"`
-		Name          string                 `json:"name,omitempty"`
-		Picture       string                 `json:"picture,omitempty"`
-		Extra         map[string]interface{} `json:"extra,omitempty"`
+		Email      string                 `json:"email,omitempty"`
+		Verified   bool                   `json:"verified,omitempty"`
+		FamilyName string                 `json:"family_name,omitempty"`
+		GivenName  string                 `json:"given_name,omitempty"`
+		Locale     string                 `json:"locale,omitempty"`
+		Name       string                 `json:"name,omitempty"`
+		Picture    string                 `json:"picture,omitempty"`
+		Extra      map[string]interface{} `json:"extra,omitempty"`
 	}
 
 	Claims struct {
