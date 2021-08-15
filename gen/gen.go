@@ -164,6 +164,7 @@ func extractFields(structType *types.Struct) []StructField {
 			fieldType = obj.Name()
 			namedField = true
 		case *types.Map:
+			isMap = true
 			key := t.Key()
 			switch k := key.(type) {
 			case *types.Named:
