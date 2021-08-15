@@ -176,15 +176,14 @@ func extractFields(structType *types.Struct) []StructField {
 			}
 
 			val := t.Elem()
-
 			if ptr, ok := val.(*types.Slice); ok {
 				isCollection = true
-				typ = ptr.Elem()
+				val = ptr.Elem()
 			}
 
 			if ptr, ok := val.(*types.Array); ok {
 				isCollection = true
-				typ = ptr.Elem()
+				val = ptr.Elem()
 			}
 
 			switch v := val.(type) {
