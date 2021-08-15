@@ -2,7 +2,6 @@ package gen
 
 import (
 	"flag"
-	"fmt"
 	"go/types"
 	"log"
 	"os"
@@ -30,6 +29,8 @@ type StructField struct {
 	FieldPkgPath string `example:"database/sql"`
 	Tag          string `example:"build:'-'"` // To ignore builder.
 	IsPointer    bool
+	// Whether it is an array or slice.
+	IsCollection bool
 }
 
 type Option struct {
@@ -43,7 +44,7 @@ type Option struct {
 
 type Generator func(opt Option) error
 
-func New(fn Generator) {
+func New(fn Generator) error {
 	structPtr := flag.String("type", "", "the target struct name")
 	inPtr := flag.String("in", os.Getenv("GOFILE"), "the input file, defaults to the file with the go:generate comment")
 	outPtr := flag.String("out", "", "the output directory")
@@ -97,10 +98,10 @@ func New(fn Generator) {
 			StructName: structName,
 			Fields:     fields,
 		}); err != nil {
-			log.Fatalln(err)
+			return err
 		}
-		fmt.Printf("wrote file to %s\n", out)
 	}
+	return nil
 }
 
 func loadPackage(path string) *packages.Package {
@@ -131,6 +132,7 @@ func extractFields(structType *types.Struct) []StructField {
 			fieldPkgPath = ""
 			fieldType    = ""
 			isPointer    = false
+			isCollection = false
 		)
 
 		typ := field.Type()
@@ -145,9 +147,14 @@ func extractFields(structType *types.Struct) []StructField {
 			fieldPkgPath = obj.Pkg().Path()
 			fieldType = obj.Name()
 			namedField = true
+		case *types.Slice:
+			fieldType = t.Elem().String()
+			isCollection = true
+		case *types.Array:
+			fieldType = t.Elem().String()
+			isCollection = true
 		default:
 			fieldType = t.String()
-			namedField = false
 		}
 		fields[i] = StructField{
 			Name:         name,
@@ -158,6 +165,7 @@ func extractFields(structType *types.Struct) []StructField {
 			FieldPkgPath: fieldPkgPath,
 			Tag:          tag,
 			IsPointer:    isPointer,
+			IsCollection: isCollection,
 		}
 	}
 	return fields
