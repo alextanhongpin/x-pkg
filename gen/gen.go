@@ -41,19 +41,27 @@ func NewField(typ types.Type) *Field {
 	var fieldPkgPath, fieldType string
 	var mapKey, mapValue *Field
 
-	if ptr, ok := typ.(*types.Pointer); ok {
+	switch t := typ.(type) {
+	case *types.Pointer:
 		isPointer = true
-		typ = ptr.Elem()
+		typ = t.Elem()
+	case *types.Slice:
+		isCollection = true
+		typ = t.Elem()
+	case *types.Array:
+		isCollection = true
+		typ = t.Elem()
+	case *types.Map:
+		isMap = true
+		mapKey = NewField(t.Key())
+		mapValue = NewField(t.Elem())
 	}
 
-	if ptr, ok := typ.(*types.Slice); ok {
-		isCollection = true
-		typ = ptr.Elem()
-	}
-
-	if ptr, ok := typ.(*types.Array); ok {
-		isCollection = true
-		typ = ptr.Elem()
+	// In case the slice or array is pointer, we take the elem again.
+	switch t := typ.(type) {
+	case *types.Pointer:
+		isPointer = true
+		typ = t.Elem()
 	}
 
 	switch t := typ.(type) {
@@ -61,13 +69,10 @@ func NewField(typ types.Type) *Field {
 		obj := t.Obj()
 		fieldPkgPath = obj.Pkg().Path()
 		fieldType = obj.Name()
-	case *types.Map:
-		isMap = true
-		mapKey = NewField(t.Key())
-		mapValue = NewField(t.Elem())
 	default:
 		fieldType = t.String()
 	}
+
 	return &Field{
 		Type:         fieldType,
 		PkgPath:      fieldPkgPath,
