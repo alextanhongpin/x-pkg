@@ -8,11 +8,11 @@ import (
 
 // SkipCurrentPackagePath returns "" if the package is referring to an entity
 // that belongs to itself, e.g. package foo calling foo.Foo.
-func SkipCurrentPackagePath(pkgPath string, field StructField) string {
-	if pkgPath == field.FieldPkgPath {
+func SkipCurrentPackagePath(pkgPath string, fieldPkgPath string) string {
+	if pkgPath == fieldPkgPath {
 		return ""
 	}
-	return field.FieldPkgPath
+	return fieldPkgPath
 }
 
 // packagePath returns the github package path from any given path,
