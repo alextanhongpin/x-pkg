@@ -30,7 +30,10 @@ type StructField struct {
 	Tag          string `example:"build:'-'"` // To ignore builder.
 	IsPointer    bool
 	// Whether it is an array or slice.
-	IsCollection bool
+	IsCollection  bool
+	IsMap         bool
+	MapKeyType    string
+	MapKeyPkgPath string
 }
 
 type Option struct {
@@ -125,14 +128,17 @@ func extractFields(structType *types.Struct) []StructField {
 		tag := structType.Tag(i)
 
 		var (
-			name         = field.Name()
-			pkgPath      = field.Pkg().Path()
-			exported     = field.Exported()
-			namedField   = false
-			fieldPkgPath = ""
-			fieldType    = ""
-			isPointer    = false
-			isCollection = false
+			name          = field.Name()
+			pkgPath       = field.Pkg().Path()
+			exported      = field.Exported()
+			namedField    = false
+			fieldPkgPath  = ""
+			fieldType     = ""
+			isPointer     = false
+			isCollection  = false
+			isMap         = false
+			mapKeyType    = ""
+			mapKeyPkgPath = ""
 		)
 
 		typ := field.Type()
@@ -157,19 +163,43 @@ func extractFields(structType *types.Struct) []StructField {
 			fieldPkgPath = obj.Pkg().Path()
 			fieldType = obj.Name()
 			namedField = true
+		case *types.Map:
+			key := t.Key()
+			switch k := key.(type) {
+			case *types.Named:
+				obj := k.Obj()
+				mapKeyPkgPath = obj.Pkg().Path()
+				mapKeyType = obj.Name()
+			default:
+				mapKeyType = k.String()
+			}
+
+			val := t.Elem()
+			switch v := val.(type) {
+			case *types.Named:
+				obj := v.Obj()
+				fieldPkgPath = obj.Pkg().Path()
+				fieldType = obj.Name()
+				namedField = true
+			default:
+				fieldType = v.String()
+			}
 		default:
 			fieldType = t.String()
 		}
 		fields[i] = StructField{
-			Name:         name,
-			PkgPath:      pkgPath,
-			Exported:     exported,
-			FieldType:    fieldType,
-			NamedField:   namedField,
-			FieldPkgPath: fieldPkgPath,
-			Tag:          tag,
-			IsPointer:    isPointer,
-			IsCollection: isCollection,
+			Name:          name,
+			PkgPath:       pkgPath,
+			Exported:      exported,
+			FieldType:     fieldType,
+			NamedField:    namedField,
+			FieldPkgPath:  fieldPkgPath,
+			Tag:           tag,
+			IsPointer:     isPointer,
+			IsCollection:  isCollection,
+			IsMap:         isMap,
+			MapKeyPkgPath: mapKeyPkgPath,
+			MapKeyType:    mapKeyType,
 		}
 	}
 	return fields
