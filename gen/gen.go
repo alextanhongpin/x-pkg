@@ -141,18 +141,22 @@ func extractFields(structType *types.Struct) []StructField {
 			typ = ptr.Elem()
 		}
 
+		if ptr, ok := field.Type().(*types.Slice); ok {
+			isCollection = true
+			typ = ptr.Elem()
+		}
+
+		if ptr, ok := field.Type().(*types.Array); ok {
+			isCollection = true
+			typ = ptr.Elem()
+		}
+
 		switch t := typ.(type) {
 		case *types.Named:
 			obj := t.Obj()
 			fieldPkgPath = obj.Pkg().Path()
 			fieldType = obj.Name()
 			namedField = true
-		case *types.Slice:
-			fieldType = t.Elem().String()
-			isCollection = true
-		case *types.Array:
-			fieldType = t.Elem().String()
-			isCollection = true
 		default:
 			fieldType = t.String()
 		}
