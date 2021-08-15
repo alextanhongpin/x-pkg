@@ -1,9 +1,12 @@
 package gen
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 // SkipCurrentPackagePath returns "" if the package is referring to an entity
@@ -38,4 +41,18 @@ func packagePath(path string) string {
 // packageName returns the base package name.
 func packageName(path string) string {
 	return filepath.Base(packagePath(path))
+}
+
+func loadPackage(path string) *packages.Package {
+	cfg := &packages.Config{
+		Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports,
+	}
+	pkgs, err := packages.Load(cfg, path)
+	if err != nil {
+		log.Fatalf("failed to load package: %v", err)
+	}
+	if packages.PrintErrors(pkgs) > 0 {
+		os.Exit(1)
+	}
+	return pkgs[0]
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/alextanhongpin/pkg/stringcase"
-	"golang.org/x/tools/go/packages"
 )
 
 // StructField for the example below.
@@ -19,21 +18,65 @@ import (
 type StructField struct {
 	Name string `example:"Name"`
 	// Useful when the output directory doesn't match the existing ones.
-	PkgPath   string `example:"github.com/alextanhongpin/go-codegen/test"`
-	PkgName   string `example:"test"`
-	Exported  bool   `example:"true"`
-	FieldType string `example:"NullString"`
+	PkgPath  string `example:"github.com/alextanhongpin/go-codegen/test"`
+	PkgName  string `example:"test"`
+	Exported bool   `example:"true"`
+	Tag      string `example:"build:'-'"` // To ignore builder.
+	*Field
+}
 
-	// When true, the FieldPkgPath is not empty.
-	NamedField   bool   `example:"true"`
-	FieldPkgPath string `example:"database/sql"`
-	Tag          string `example:"build:'-'"` // To ignore builder.
+type Field struct {
+	Type         string `example:"NullString"`
+	PkgPath      string `example:"database/sql"`
 	IsPointer    bool
-	// Whether it is an array or slice.
-	IsCollection  bool
-	IsMap         bool
-	MapKeyType    string
-	MapKeyPkgPath string
+	IsCollection bool // Whether it's an array or slice.
+	IsMap        bool
+	MapKey       *Field
+	MapValue     *Field
+}
+
+// NewField recursively checks for the field type.
+func NewField(typ types.Type) *Field {
+	var isPointer, isCollection, isMap bool
+	var fieldPkgPath, fieldType string
+	var mapKey, mapValue *Field
+
+	if ptr, ok := typ.(*types.Pointer); ok {
+		isPointer = true
+		typ = ptr.Elem()
+	}
+
+	if ptr, ok := typ.(*types.Slice); ok {
+		isCollection = true
+		typ = ptr.Elem()
+	}
+
+	if ptr, ok := typ.(*types.Array); ok {
+		isCollection = true
+		typ = ptr.Elem()
+	}
+
+	switch t := typ.(type) {
+	case *types.Named:
+		obj := t.Obj()
+		fieldPkgPath = obj.Pkg().Path()
+		fieldType = obj.Name()
+	case *types.Map:
+		isMap = true
+		mapKey = NewField(t.Key())
+		mapValue = NewField(t.Elem())
+	default:
+		fieldType = t.String()
+	}
+	return &Field{
+		Type:         fieldType,
+		PkgPath:      fieldPkgPath,
+		IsCollection: isCollection,
+		IsPointer:    isPointer,
+		IsMap:        isMap,
+		MapKey:       mapKey,
+		MapValue:     mapValue,
+	}
 }
 
 type Option struct {
@@ -107,110 +150,18 @@ func New(fn Generator) error {
 	return nil
 }
 
-func loadPackage(path string) *packages.Package {
-	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports,
-	}
-	pkgs, err := packages.Load(cfg, path)
-	if err != nil {
-		log.Fatalf("failed to load package: %v", err)
-	}
-	if packages.PrintErrors(pkgs) > 0 {
-		os.Exit(1)
-	}
-	return pkgs[0]
-}
-
 func extractFields(structType *types.Struct) []StructField {
 	fields := make([]StructField, structType.NumFields())
 	for i := 0; i < structType.NumFields(); i++ {
 		field := structType.Field(i)
 		tag := structType.Tag(i)
 
-		var (
-			name          = field.Name()
-			pkgPath       = field.Pkg().Path()
-			exported      = field.Exported()
-			namedField    = false
-			fieldPkgPath  = ""
-			fieldType     = ""
-			isPointer     = false
-			isCollection  = false
-			isMap         = false
-			mapKeyType    = ""
-			mapKeyPkgPath = ""
-		)
-
-		typ := field.Type()
-		if ptr, ok := field.Type().(*types.Pointer); ok {
-			isPointer = true
-			typ = ptr.Elem()
-		}
-
-		if ptr, ok := field.Type().(*types.Slice); ok {
-			isCollection = true
-			typ = ptr.Elem()
-		}
-
-		if ptr, ok := field.Type().(*types.Array); ok {
-			isCollection = true
-			typ = ptr.Elem()
-		}
-
-		switch t := typ.(type) {
-		case *types.Named:
-			obj := t.Obj()
-			fieldPkgPath = obj.Pkg().Path()
-			fieldType = obj.Name()
-			namedField = true
-		case *types.Map:
-			isMap = true
-			key := t.Key()
-			switch k := key.(type) {
-			case *types.Named:
-				obj := k.Obj()
-				mapKeyPkgPath = obj.Pkg().Path()
-				mapKeyType = obj.Name()
-			default:
-				mapKeyType = k.String()
-			}
-
-			val := t.Elem()
-			if ptr, ok := val.(*types.Slice); ok {
-				isCollection = true
-				val = ptr.Elem()
-			}
-
-			if ptr, ok := val.(*types.Array); ok {
-				isCollection = true
-				val = ptr.Elem()
-			}
-
-			switch v := val.(type) {
-			case *types.Named:
-				obj := v.Obj()
-				fieldPkgPath = obj.Pkg().Path()
-				fieldType = obj.Name()
-				namedField = true
-			default:
-				fieldType = v.String()
-			}
-		default:
-			fieldType = t.String()
-		}
 		fields[i] = StructField{
-			Name:          name,
-			PkgPath:       pkgPath,
-			Exported:      exported,
-			FieldType:     fieldType,
-			NamedField:    namedField,
-			FieldPkgPath:  fieldPkgPath,
-			Tag:           tag,
-			IsPointer:     isPointer,
-			IsCollection:  isCollection,
-			IsMap:         isMap,
-			MapKeyPkgPath: mapKeyPkgPath,
-			MapKeyType:    mapKeyType,
+			Name:     field.Name(),
+			PkgPath:  field.Pkg().Path(),
+			Exported: field.Exported(),
+			Field:    NewField(field.Type()),
+			Tag:      tag,
 		}
 	}
 	return fields
