@@ -176,6 +176,17 @@ func extractFields(structType *types.Struct) []StructField {
 			}
 
 			val := t.Elem()
+
+			if ptr, ok := val.(*types.Slice); ok {
+				isCollection = true
+				typ = ptr.Elem()
+			}
+
+			if ptr, ok := val.(*types.Array); ok {
+				isCollection = true
+				typ = ptr.Elem()
+			}
+
 			switch v := val.(type) {
 			case *types.Named:
 				obj := v.Obj()
