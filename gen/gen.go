@@ -42,9 +42,6 @@ func NewField(typ types.Type) *Field {
 	var mapKey, mapValue *Field
 
 	switch t := typ.(type) {
-	case *types.Pointer:
-		isPointer = true
-		typ = t.Elem()
 	case *types.Slice:
 		isCollection = true
 		typ = t.Elem()

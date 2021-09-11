@@ -19,6 +19,7 @@ func ExampleCamelCase() {
 		"!created+at!",
 		"this--is--a--slug",
 		"address.home",
+		"---foo***(***)bar---",
 	} {
 		fmt.Println(s + " -> " + stringcase.CamelCase(s))
 	}
@@ -28,12 +29,13 @@ func ExampleCamelCase() {
 	//THE AMAZING SPIDER-MAN -> theAmazingSpiderMan
 	//A!@#$SAFS ridiculous -> aSafsRidiculous
 	//property changer -> propertyChanger
-	//userID -> userId
-	//USER ID. -> userId
+	//userID -> userID
+	//USER ID. -> userID
 	//created+at -> createdAt
 	//!created+at! -> createdAt
 	//this--is--a--slug -> thisIsASlug
 	//address.home -> addressHome
+	//---foo***(***)bar--- -> fooBar
 }
 
 func ExampleSnakeCase() {
@@ -62,7 +64,7 @@ func ExampleSnakeCase() {
 	//USER ID. -> user_id
 	//created+at -> created_at
 	//!created+at! -> created_at
-	//this--is--a--slug -> this_is_aslug
+	//this--is--a--slug -> this_is_a_slug
 	//address.home -> address_home
 }
 
@@ -92,7 +94,7 @@ func ExampleKebabCase() {
 	//USER ID. -> user-id
 	//created+at -> created-at
 	//!created+at! -> created-at
-	//this--is--a--slug -> this-is-aslug
+	//this--is--a--slug -> this-is-a-slug
 	//address.home -> address-home
 }
 
@@ -118,8 +120,8 @@ func ExamplePascalCase() {
 	//THE AMAZING SPIDER-MAN -> TheAmazingSpiderMan
 	//A!@#$SAFS ridiculous -> ASafsRidiculous
 	//property changer -> PropertyChanger
-	//userID -> UserId
-	//USER ID. -> UserId
+	//userID -> UserID
+	//USER ID. -> UserID
 	//created+at -> CreatedAt
 	//!created+at! -> CreatedAt
 	//this--is--a--slug -> ThisIsASlug
