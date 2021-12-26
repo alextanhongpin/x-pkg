@@ -8,6 +8,8 @@ import (
 
 func ExampleCamelCase() {
 	for _, s := range []string{
+		"ID",
+		"UserID",
 		"user_service",
 		"party pooper",
 		"THE AMAZING SPIDER-MAN",
@@ -24,6 +26,8 @@ func ExampleCamelCase() {
 		fmt.Println(s + " -> " + stringcase.CamelCase(s))
 	}
 	// Output:
+	//ID -> id
+	//UserID -> userID
 	//user_service -> userService
 	//party pooper -> partyPooper
 	//THE AMAZING SPIDER-MAN -> theAmazingSpiderMan

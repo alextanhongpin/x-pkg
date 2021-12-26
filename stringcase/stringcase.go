@@ -58,7 +58,11 @@ func toKebab(next StringCaser) StringCaser {
 
 func lowerFirst(next StringCaser) StringCaser {
 	return func(s string) string {
-		s = LowerFirst(s)
+		if commonInitialisms[s] {
+			s = strings.ToLower(s)
+		} else {
+			s = LowerFirst(s)
+		}
 		return next(s)
 	}
 }
