@@ -38,12 +38,7 @@ func (c Key[T]) MustValue(ctx context.Context) T {
 		panic(fmt.Errorf("contextkey: not found: %s", c))
 	}
 
-	t, ok := val.(T)
-	if !ok {
-		panic(fmt.Errorf("contextkey: not found: %s", c))
-	}
-
-	return t
+	return MustBe[T](val)
 }
 
 var UserContext Key[*User] = "user"
@@ -54,9 +49,26 @@ func main() {
 	res, ok := UserContext.Value(ctx)
 	// res := UserContext.MustValue(ctx)
 	fmt.Println(res, ok)
+
+	fmt.Println(MustBe[string](10))
 }
 
 type User struct {
 	Name string
+}
+
+func As[T any](unk any) (t T, ok bool) {
+	t, ok = unk.(T)
+
+	return
+}
+
+func MustBe[T any](unk any) T {
+	t, ok := As[T](unk)
+	if !ok {
+		panic(fmt.Errorf("cast error: expected %T, got %T", t, unk))
+	}
+
+	return t
 }
 ```
